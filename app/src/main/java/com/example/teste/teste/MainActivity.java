@@ -43,7 +43,6 @@ public class MainActivity extends Activity implements IResult {
 
         adapter = new ArrayAdapter<Car>(this, android.R.layout.activity_list_item, l);
         mListView.setAdapter(adapter);
-        {}
     }
 
     @Override
