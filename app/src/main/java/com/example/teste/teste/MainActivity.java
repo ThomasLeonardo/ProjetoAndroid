@@ -16,6 +16,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -23,6 +24,7 @@ public class MainActivity extends Activity  {
 
     LayoutInflater factory = null;
     private ListView mensagens;
+    private int usuario_id=-1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -142,9 +144,16 @@ public class MainActivity extends Activity  {
                     public void onClick(DialogInterface dialogInterface, int i) {
                         EditText textoNovaMensagem = (EditText) viewNovaMensagem.findViewById(R.id.novaMensagem);
                         SQLiteDatabase db = new DatabaseHandler(MainActivity.this).getReadableDatabase();
-                        ContentValues cv = new ContentValues();
-                        cv.put("mensagem", textoNovaMensagem.getText().toString());
-                        db.insert("mensagens", null, cv);
+                        if(usuario_id!=-1) {
+                            ContentValues cv = new ContentValues();
+                            cv.put("mensagem", textoNovaMensagem.getText().toString());
+                            cv.put("usuario_id", usuario_id);
+                            db.insert("mensagens", null, cv);
+                        }
+                        else{
+                            Toast toast=Toast.makeText(MainActivity.this,"Nenhum usuario logado",Toast.LENGTH_SHORT);
+                            toast.show();
+                        }
                         String[] listViewMensagens = todasMensagens();
                         ArrayAdapter<String> selectedUsersAdapter = new ArrayAdapter<String>(MainActivity.this,
                                 android.R.layout.simple_list_item_1,
@@ -156,10 +165,106 @@ public class MainActivity extends Activity  {
                 alertNovaMensagem.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
-
                     }
                 });
                 alertNovaMensagem.show();
+            }
+        });
+
+        final Button login=(Button)findViewById(R.id.login);
+        final Button logout=(Button)findViewById(R.id.logout);
+        final Button cadastrar=(Button)findViewById(R.id.cadastrar);
+        login.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                final View viewLogin = factory.inflate(R.layout.login, null);
+                final AlertDialog.Builder alertLogin = new AlertDialog.Builder(MainActivity.this).setView(viewLogin);
+                alertLogin.setTitle("Login");
+                alertLogin.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        SQLiteDatabase db = new DatabaseHandler(MainActivity.this).getReadableDatabase();
+                        EditText usuario = (EditText) viewLogin.findViewById(R.id.usuario);
+                        EditText senha = (EditText) viewLogin.findViewById(R.id.senha);
+                        Cursor cursor =db.rawQuery("SELECT _id FROM usuarios WHERE usuario=? AND senha=?",new String[]{usuario.getText().toString(),senha.getText().toString()});
+                        if(cursor!=null)
+                        {
+                            if(cursor.moveToFirst()) {
+                                usuario_id = cursor.getInt(0);
+                                cursor.close();
+                                logout.setVisibility(View.VISIBLE);
+                                login.setVisibility(View.GONE);
+                                cadastrar.setVisibility(View.GONE);
+                                String[] listViewMensagens = todasMensagens();
+                                ArrayAdapter<String> selectedUsersAdapter = new ArrayAdapter<String>(MainActivity.this,
+                                        android.R.layout.simple_list_item_1,
+                                        android.R.id.text1,
+                                        listViewMensagens);
+                                mensagens.setAdapter(selectedUsersAdapter);
+                            }
+                            else {
+                                Toast toast=Toast.makeText(MainActivity.this,"Usuario ou senha incorretos",Toast.LENGTH_SHORT);
+                                toast.show();
+                            }
+                        }
+                        else
+                        {
+                            Toast toast=Toast.makeText(MainActivity.this,"Usuario ou senha incorretos",Toast.LENGTH_SHORT);
+                            toast.show();
+                        }
+                    }
+                });
+                alertLogin.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                    }
+                });
+                alertLogin.show();
+            }
+        });
+        logout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                usuario_id=-1;
+                logout.setVisibility(View.GONE);
+                login.setVisibility(View.VISIBLE);
+                cadastrar.setVisibility(View.VISIBLE);
+                String[] listViewMensagens = todasMensagens();
+                ArrayAdapter<String> selectedUsersAdapter = new ArrayAdapter<String>(MainActivity.this,
+                        android.R.layout.simple_list_item_1,
+                        android.R.id.text1,
+                        listViewMensagens);
+                mensagens.setAdapter(selectedUsersAdapter);
+            }
+        });
+        cadastrar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                final View viewCadastrar = factory.inflate(R.layout.login, null);
+                final AlertDialog.Builder alertCadastrar = new AlertDialog.Builder(MainActivity.this).setView(viewCadastrar);
+                alertCadastrar.setTitle("Cadastrar novo usuario");
+                alertCadastrar.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        SQLiteDatabase db = new DatabaseHandler(MainActivity.this).getReadableDatabase();
+                        EditText usuario = (EditText) viewCadastrar.findViewById(R.id.usuario);
+                        EditText senha = (EditText) viewCadastrar.findViewById(R.id.senha);
+                        ContentValues cv = new ContentValues();
+                        cv.put("usuario", usuario.getText().toString());
+                        cv.put("senha", senha.getText().toString());
+                        db.insert("usuarios", null, cv);
+                        usuario_id=Integer.parseInt(senha.getText().toString());
+                        logout.setVisibility(View.VISIBLE);
+                        login.setVisibility(View.GONE);
+                        cadastrar.setVisibility(View.GONE);
+                    }
+                });
+                alertCadastrar.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                    }
+                });
+                alertCadastrar.show();
             }
         });
     }
@@ -174,12 +279,13 @@ public class MainActivity extends Activity  {
     {
         ArrayList<String> mensagens=new ArrayList<String>();
         SQLiteDatabase db = new DatabaseHandler(MainActivity.this).getReadableDatabase();
-        Cursor cursor = db.rawQuery("select mensagem from mensagens", null);
+        Cursor cursor = db.rawQuery("select usuario_id,mensagem from mensagens", null);
         if (cursor != null) {
             if(cursor.moveToFirst())
             {
                 do{
-                    mensagens.add(cursor.getString(0));
+                    if(cursor.getInt(0)==usuario_id)
+                        mensagens.add(cursor.getString(1));
                 }while(cursor.moveToNext());
             }
             cursor.close();

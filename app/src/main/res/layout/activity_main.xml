@@ -20,7 +20,26 @@
             android:layout_height="wrap_content"
             android:layout_gravity="bottom"
             android:text="Nova Mensagem"/>
-
+        <Button
+            android:id="@+id/login"
+            android:layout_width="130dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="50dp"
+            android:layout_gravity="right"
+            android:text="Login"/>
+        <Button
+            android:id="@+id/logout"
+            android:layout_width="130dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"
+            android:visibility="gone"
+            android:text="Logout"/>
+        <Button
+            android:id="@+id/cadastrar"
+            android:layout_width="130dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"
+            android:text="Cadastrar"/>
     </FrameLayout>
 
 
