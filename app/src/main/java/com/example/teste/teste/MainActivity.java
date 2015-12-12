@@ -15,13 +15,10 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 
-import com.example.teste.teste.service.IServiceOrder;
-
 import java.util.ArrayList;
 
 public class MainActivity extends Activity  {
-
-    private IServiceOrder serviceOrder;
+    
     LayoutInflater factory = null;
     private ListView mensagens;
 
@@ -93,7 +90,7 @@ public class MainActivity extends Activity  {
                         clickMenu.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialogInterface, int i) {
-                                
+
                             }
                         });
                         clickMenu.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
