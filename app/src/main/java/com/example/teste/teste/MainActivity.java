@@ -4,8 +4,10 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,7 +20,7 @@ import android.widget.ListView;
 import java.util.ArrayList;
 
 public class MainActivity extends Activity  {
-    
+
     LayoutInflater factory = null;
     private ListView mensagens;
 
@@ -40,11 +42,11 @@ public class MainActivity extends Activity  {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int i, long l) {
                 final String mensagemAtual = (String) parent.getAdapter().getItem(i);
-                final View menuView=factory.inflate(R.layout.list_view_item_long_click, null);
-                AlertDialog.Builder longClickMenu=new AlertDialog.Builder(MainActivity.this).setView(menuView);
-                final AlertDialog dialog=longClickMenu.create();
-                Button editar=(Button) menuView.findViewById(R.id.editar);
-                Button deletar=(Button) menuView.findViewById(R.id.deletar);
+                final View menuView = factory.inflate(R.layout.list_view_item_long_click, null);
+                AlertDialog.Builder longClickMenu = new AlertDialog.Builder(MainActivity.this).setView(menuView);
+                final AlertDialog dialog = longClickMenu.create();
+                Button editar = (Button) menuView.findViewById(R.id.editar);
+                Button deletar = (Button) menuView.findViewById(R.id.deletar);
 
                 editar.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -80,34 +82,12 @@ public class MainActivity extends Activity  {
                         editar.show();
                     }
                 });
-                mensagens.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int i, long l) {
-                        final String mensagem = (String) parent.getAdapter().getItem(i);
-                        final View menuView=factory.inflate(R.layout.list_view_item_click, null);
-                        AlertDialog.Builder clickMenu=new AlertDialog.Builder(MainActivity.this).setView(menuView);
-                        clickMenu.setTitle("Enviar mensagem");
-                        clickMenu.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-
-                            }
-                        });
-                        clickMenu.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                            }
-                        });
-                        clickMenu.show();
-                    }
-                });
-
                 deletar.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
                         dialog.cancel();
                         SQLiteDatabase db = new DatabaseHandler(MainActivity.this).getReadableDatabase();
-                        db.delete("mensagens","mensagem=?",new String[]{mensagemAtual});
+                        db.delete("mensagens", "mensagem=?", new String[]{mensagemAtual});
 
                         String[] listViewMensagens = todasMensagens();
                         ArrayAdapter<String> selectedUsersAdapter = new ArrayAdapter<String>(MainActivity.this,
@@ -119,9 +99,35 @@ public class MainActivity extends Activity  {
                 });
 
                 dialog.show();
-                return false;
+                return true;
             }
 
+        });
+        mensagens.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int i, long l) {
+                final String mensagem = (String) parent.getAdapter().getItem(i);
+                final View menuView = factory.inflate(R.layout.list_view_item_click, null);
+                AlertDialog.Builder clickMenu = new AlertDialog.Builder(MainActivity.this).setView(menuView);
+                clickMenu.setTitle("Enviar mensagem");
+                clickMenu.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        EditText destinatario = (EditText) menuView.findViewById(R.id.escolherNumero);
+                        Intent sendIntent = new Intent(Intent.ACTION_VIEW);
+                        sendIntent.putExtra("address", destinatario.getText().toString());
+                        sendIntent.putExtra("sms_body", mensagem);
+                        sendIntent.setType("vnd.android-dir/mms-sms");
+                        startActivity(sendIntent);
+                    }
+                });
+                clickMenu.setNegativeButton(android.R.string.cancel, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                    }
+                });
+                clickMenu.show();
+            }
         });
         //botao nova mensagem
         Button novaMensagem=(Button)findViewById(R.id.acrescentarMensagem);
@@ -172,14 +178,12 @@ public class MainActivity extends Activity  {
         if (cursor != null) {
             if(cursor.moveToFirst())
             {
-                int current=0;
                 do{
                     mensagens.add(cursor.getString(0));
                 }while(cursor.moveToNext());
             }
-
+            cursor.close();
         }
-        cursor.close();
         return mensagens.toArray(new String[mensagens.size()]);
     }
 }
